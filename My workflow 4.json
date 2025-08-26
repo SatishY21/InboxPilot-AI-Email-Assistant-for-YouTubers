@@ -1,0 +1,302 @@
+{
+  "name": "My workflow 4",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -352,
+        -48
+      ],
+      "id": "e77227ee-4136-4fdb-9881-3dc0327e7839",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5uK3oKF4whB89CX6",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Sponsorship",
+              "description": "Sponsorship emails are messages from brands, agencies, or companies looking to collaborate with a YouTuber, often including partnership proposals, campaign details, or payment offers. These emails need careful review to ensure legitimacy, negotiate terms, and capture valuable opportunities."
+            },
+            {
+              "category": "High-Priority",
+              "description": "High-priority emails, on the other hand, include time-sensitive or critical messages — such as event invitations, platform notices, collaboration requests from other creators, or urgent updates affecting the channel."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        -144,
+        -48
+      ],
+      "id": "5e259c53-ed97-4420-9150-cbc29c4ccc62",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        160
+      ],
+      "id": "a22030f0-a9e7-4d03-82ff-e206edacd7ba",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "erFuhKg1jPBKySV4",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "=models/gemini-2.0-flash",
+          "mode": "id"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an assistant of a youtuber named satishry\nyour job is to respond the email below\n\nThe AI should read every sponsorship email, thank the sender for their interest, and respond in Satishry’s friendly but professional voice. If the offered amount is $4,999 or higher, it should accept the collaboration enthusiastically. If the offer is below $4,999, it should politely explain that $4,999 is the minimum sponsorship cost and invite the sender to discuss further if they can meet that rate. The AI’s response must always be concise, clear, and formatted as valid JSON containing two fields — a subject line for the reply and the email body text.\n\nsample response email:\nSubject: Re: Sponsorship Opportunity with BlueBull Energy Drinks\n\nHi Tony,\n\nThank you so much for reaching out and considering a collaboration with my channel. I really appreciate your interest in working together.\n\nI'm happy to move forward with this sponsorship at $10,000. It sounds like a great fit.\n\nPlease let me know the next steps or a convenient time to discuss the details.\n\nBest regards,\nSatishry\n\nThe email to respond is :  {{ $json.text }}",
+              "role": "model"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        208,
+        -144
+      ],
+      "id": "00cc0ce7-7e13-4d15-b23f-b0563f3d7aee",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "erFuhKg1jPBKySV4",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $json.content.parts[0].subject }}",
+        "message": "={{ $json.content.parts[0].response }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        560,
+        -144
+      ],
+      "id": "cf1369bd-d5f5-4900-8619-54336c3ac154",
+      "name": "Create a draft",
+      "webhookId": "b6ba9d8e-ce58-491d-bd98-bc60ec14edde",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5uK3oKF4whB89CX6",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an assistant of a youtuber named satishry\nyour job is to respond the email below\n\nAcknowledge quickly – Start by thanking the sender or confirming you’ve received their email.\n\nAddress the key point directly – Get straight to what they need or the issue they’ve raised.\n\nProvide a clear action or next step – State what you will do, what they need to do, or when you’ll follow up.\n\nKeep it concise and professional – Avoid unnecessary detail, but make sure your response removes any uncertainty.\n\nUse a polite closing – End with a line that keeps communication open.\n\nExample response to a high-priority email:\n\nSubject: Re: Urgent Request for Collaboration\n\nHi [Name],\n\nThank you for reaching out and flagging this as urgent. I’ve reviewed your request and will [provide decision or action] right away.\n\nPlease expect [next step or timeline, e.g., “a full response by this afternoon” or “a call from me within the hour”]. If there’s anything additional I should review, please send it over as soon as possible.\n\nBest regards,\nSatishry\n\nemail to respond:  {{ $json.text }}",
+              "role": "model"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        208,
+        48
+      ],
+      "id": "034e29c6-7901-4ed9-8606-c1e0ab9db117",
+      "name": "Message a model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "erFuhKg1jPBKySV4",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $json.content.parts[0].subject }}",
+        "message": "={{ $json.content.parts[0].text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        560,
+        48
+      ],
+      "id": "5967e3f6-577a-43c0-b645-60ef8c73579f",
+      "name": "Create a draft1",
+      "webhookId": "c26f1033-09cd-47e9-b879-c2a95cc7670e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5uK3oKF4whB89CX6",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Message a model": [
+      {
+        "json": {
+          "content": {
+            "parts": [
+              {
+                "subject": "Re: Sponsorship Opportunity with BlueBull Energy Drinks",
+                "response": "Hi Tony,\n\nThank you so much for reaching out and considering a collaboration with my channel. I really appreciate your interest in working together.\n\nI'm happy to move forward with this sponsorship at $10,000. It sounds like a great fit.\n\nPlease let me know the next steps or a convenient time to discuss the details.\n\nBest regards,\nSatishry"
+              }
+            ],
+            "role": "model"
+          },
+          "finishReason": "STOP",
+          "avgLogprobs": -0.0008574394803298148
+        }
+      }
+    ],
+    "Message a model1": [
+      {
+        "json": {
+          "content": {
+            "parts": [
+              {
+                "subject": "Re: Copyright Notice on Your YouTube Video",
+                "text": "{ \"body\": \"Hi YouTube Support Team,\\n\\nThank you for notifying me about the copyright issue. I've logged into Creator Studio and am reviewing the notice now.\\n\\nI will submit my response within the next 24 hours.\\n\\nBest regards,\\nSatishry\"\n}"
+              }
+            ],
+            "role": "model"
+          },
+          "finishReason": "STOP",
+          "avgLogprobs": -0.059115145579878105
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Create a draft1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "70380e7e-359c-43c8-863b-b3cf914fff09",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b775fa34e364ff1301821c67a36d79aea6d7f8cdd1d12670e30172d746f662ad"
+  },
+  "id": "V9BEAEYaIsmyzum4",
+  "tags": []
+}
